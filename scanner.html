@@ -11,12 +11,12 @@
 <body><main class="wrap">
 <section class="panel">
 <div class="brand">ZENOVA ATTENDANCE</div><div class="sub">MTs MUHAMMADIYAH BATANG · QR SCANNER</div>
-<div class="setup" id="setup">
+<div class="setup hidden" id="setup">
 <label for="gasUrl">URL Web App Google Apps Script (akhiran /exec)</label>
 <input id="gasUrl" type="url" placeholder="https://script.google.com/macros/s/...../exec" autocomplete="url">
 <button class="btn secondary" onclick="saveUrl()">Simpan URL</button>
 </div>
-<div id="camMsg" class="msg">Masukkan URL Web App, lalu tekan Mulai Scanner.</div>
+<div id="camMsg" class="msg">Tekan Mulai Scanner untuk mulai memindai QR siswa.</div>
 <div id="reader" class="reader"></div>
 <button id="startBtn" class="btn" onclick="startScanner()">📷 Mulai Scanner</button>
 <button id="stopBtn" class="btn stop hidden" onclick="stopScanner()">⏹ Tutup Kamera</button>
@@ -25,12 +25,13 @@
 <div class="hint">Catatan: izin kamera hanya diminta oleh browser saat pertama kali memakai scanner di alamat hosting ini. Pilih Izinkan; setelah itu browser biasanya mengingat izin untuk kunjungan berikutnya.</div>
 </section></main>
 <script>
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyxJmG1G_j3Hc_TTVr1sGr3F7_BK2SDpeUxuI92kg2s5b9FyjMhFxNuakOzcVfPfDM6/exec';
 let scanner=null, running=false, lastValue='', lastAt=0, busy=false;
 const $=id=>document.getElementById(id);
-const saved=localStorage.getItem('zenova_gas_url')||''; $('gasUrl').value=saved;
+$('gasUrl').value=DEFAULT_GAS_URL; localStorage.setItem('zenova_gas_url', DEFAULT_GAS_URL);
 function say(t){$('camMsg').textContent=t}
 function saveUrl(){let u=$('gasUrl').value.trim();if(!/^https:\/\/script\.google\.com\/macros\/s\/[^\s]+\/exec(?:\?.*)?$/.test(u)){say('URL belum sesuai. Gunakan URL Web App Google Apps Script yang berakhiran /exec.');return}localStorage.setItem('zenova_gas_url',u);say('URL tersimpan. Siap memulai scanner.')}
-function getUrl(){let u=$('gasUrl').value.trim();if(!u){say('Masukkan URL Web App Google Apps Script terlebih dahulu.');return ''}if(!/^https:\/\/script\.google\.com\/macros\/s\/[^\s]+\/exec(?:\?.*)?$/.test(u)){say('URL harus berupa URL Web App HTTPS yang berakhiran /exec.');return ''}localStorage.setItem('zenova_gas_url',u);return u}
+function getUrl(){let u=DEFAULT_GAS_URL;if(!/^https:\/\/script\.google\.com\/macros\/s\/[^\s]+\/exec(?:\?.*)?$/.test(u)){say('URL harus berupa URL Web App HTTPS yang berakhiran /exec.');return ''}localStorage.setItem('zenova_gas_url',u);return u}
 async function startScanner(){if(running)return;if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){say('Halaman scanner harus dibuka melalui HTTPS di Chrome terbaru.');return}if(!window.Html5Qrcode){say('Library QR belum termuat. Periksa internet lalu muat ulang.');return}if(!getUrl())return;
  try{say('Meminta akses kamera…');scanner=new Html5Qrcode('reader');await scanner.start({facingMode:'environment'},{fps:12,qrbox:{width:230,height:230},aspectRatio:1},decoded=>sendScan(decoded),()=>{});running=true;$('startBtn').classList.add('hidden');$('stopBtn').classList.remove('hidden');say('Kamera aktif. Arahkan QR kartu siswa ke kotak scanner.');}
  catch(e){scanner=null;let n=e?.name||'',m=e?.message||String(e);if(n==='NotAllowedError'||n==='PermissionDeniedError')say('Izin kamera ditolak untuk alamat scanner ini. Izinkan kamera pada situs hosting scanner, bukan hanya script.google.com.');else if(n==='NotFoundError')say('Kamera tidak ditemukan pada perangkat.');else if(n==='NotReadableError')say('Kamera sedang digunakan aplikasi lain. Tutup aplikasi kamera/meeting lalu coba lagi.');else say('Gagal membuka kamera: '+m)} }
