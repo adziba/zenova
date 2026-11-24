@@ -5,65 +5,49 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ZENOVA QR Scanner</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/html5-qrcode"></script>
 <style>
-*{box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}body{margin:0;background:#070b19;color:#f8fafc;padding:16px;min-height:100vh}.wrap{max-width:760px;margin:0 auto}.panel{background:#162038;border:2px solid #a9852d;border-radius:22px;padding:20px;margin:12px 0;text-align:center;box-shadow:0 16px 40px #0007}.brand{color:#fbbf24;font-weight:800;font-size:20px;margin:4px 0}.sub{color:#aab6cc;font-size:12px;letter-spacing:1px;margin:5px 0 16px}.btn{width:100%;border:0;border-radius:12px;padding:14px;margin-top:10px;font-weight:800;font-size:15px;color:white;background:#059669;cursor:pointer}.btn.stop{background:#dc2626}.reader{width:100%;min-height:280px;background:#000;border:2px solid #fbbf24;border-radius:16px;overflow:hidden;margin-top:12px}.reader video{object-fit:cover!important}.msg{min-height:30px;color:#fbbf24;font-size:13px;margin:10px 0;line-height:1.5}.result{border:1px solid #475569;background:#0b1329;border-radius:14px;padding:16px;margin-top:12px}.result.ok{border-color:#34d399}.result.bad{border-color:#f87171}.student{font-size:20px;font-weight:800;margin:7px}.muted{color:#aab6cc;font-size:12px}.hidden{display:none!important}@media(max-width:480px){body{padding:8px}.panel{padding:15px;border-radius:17px}.reader{min-height:260px}.brand{font-size:18px}}
+*{box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}body{margin:0;background:#070b19;color:#f8fafc;padding:16px;min-height:100vh}.wrap{max-width:760px;margin:0 auto}.panel{background:#162038;border:2px solid #a9852d;border-radius:22px;padding:24px;margin:12px 0;text-align:center;box-shadow:0 16px 40px #0007}.brand{color:#fbbf24;font-weight:800;font-size:22px;margin:4px 0}.sub{color:#aab6cc;font-size:12px;letter-spacing:1px;margin:5px 0 20px}.msg{color:#34d399;font-size:15px;font-weight:700;margin:15px 0}.result{border:2px solid #475569;background:#0b1329;border-radius:14px;padding:20px;margin-top:20px}.result.ok{border-color:#34d399}.result.bad{border-color:#f87171}.student{font-size:24px;font-weight:800;margin:10px 0}.muted{color:#aab6cc;font-size:13px}.hidden{display:none!important}
 </style>
 </head>
-<body>
+<body onclick="document.getElementById('scannerInput').focus()">
 <main class="wrap">
   <section class="panel">
     <div class="brand">ZENOVA ATTENDANCE</div>
-    <div class="sub">MTs MUHAMMADIYAH BATANG · QR SCANNER</div>
+    <div class="sub">MTs MUHAMMADIYAH BATANG · HARDWARE SCANNER</div>
     
-    <div id="camMsg" class="msg">Tekan Mulai Scanner untuk mulai memindai QR siswa.</div>
-    <div id="reader" class="reader"></div>
-    <button id="startBtn" class="btn" onclick="startScanner()">📷 Mulai Scanner</button>
-    <button id="stopBtn" class="btn stop hidden" onclick="stopScanner()">⏹ Tutup Kamera</button>
+    <!-- Kotak tersembunyi untuk menangkap tembakan dari alat scanner fisik -->
+    <input type="text" id="scannerInput" autofocus style="opacity:0; position:absolute; left:-9999px;" onkeypress="handleScanInput(event)">
+    
+    <div id="camMsg" class="msg">⚡ SIAP MENERIMA SCANNER</div>
     
     <div class="result" id="result">
       <div class="muted" id="state">MENUNGGU SCAN</div>
-      <div class="student" id="student">Arahkan QR kartu siswa</div>
+      <div class="student" id="student">Arahkan alat scanner ke kartu siswa</div>
       <div id="info" class="muted">Hasil absensi akan tampil di sini</div>
     </div>
   </section>
 </main>
 
 <script>
-// Pastikan URL di bawah ini adalah URL /exec terbaru dari Google Apps Script Anda
+// --- PASTI KAN URL DI BAWAH INI ADALAH URL /EXEC TERBARU ANDA ---
 const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyxJmG1G_j3Hc_TTVr1sGr3F7_BK2SDpeUxuI92kg2s5b9FyjMhFxNuakOzcVfPfDM6/exec';
 
-let scanner=null, running=false, lastValue='', lastAt=0, busy=false;
+let lastValue='', lastAt=0, busy=false;
 const $=id=>document.getElementById(id);
 
-function say(t){$('camMsg').textContent=t}
+// Menjaga fokus selalu di input tersembunyi agar langsung siap nerima scan kapan saja
+window.addEventListener('focus', () => { $('scannerInput').focus(); });
+setInterval(() => { if(document.activeElement !== $('scannerInput')) { $('scannerInput').focus(); } }, 1000);
 
-async function startScanner(){
-  if(running)return;
-  try{
-    say('Meminta akses kamera…');
-    scanner=new Html5Qrcode('reader');
-    await scanner.start({facingMode:'environment'},{fps:12,qrbox:{width:230,height:230},aspectRatio:1},decoded=>sendScan(decoded),()=>{});
-    running=true;
-    $('startBtn').classList.add('hidden');
-    $('stopBtn').classList.remove('hidden');
-    say('Kamera aktif. Arahkan QR kartu siswa ke kotak.');
-  }catch(e){
-    scanner=null;
-    say('Gagal membuka kamera. Periksa izin browser.');
+function handleScanInput(e) {
+  if (e.key === 'Enter') {
+    let inputEl = $('scannerInput');
+    let val = inputEl.value.trim();
+    inputEl.value = ''; // Bersihkan untuk scan berikutnya
+    if (val) {
+      sendScan(val);
+    }
   }
-}
-
-async function stopScanner(){
-  if(scanner&&running){
-    try{await scanner.stop()}catch(e){}
-    try{await scanner.clear()}catch(e){}
-  }
-  scanner=null;
-  running=false;
-  $('startBtn').classList.remove('hidden');
-  $('stopBtn').classList.add('hidden');
-  say('Kamera ditutup.');
 }
 
 function sendScan(id){
