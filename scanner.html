@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
-*{box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}body{margin:0;background:#070b19;color:#f8fafc;padding:16px;min-height:100vh}.wrap{max-width:760px;margin:0 auto}.panel{background:#162038;border:2px solid #a9852d;border-radius:22px;padding:20px;margin:12px 0;text-align:center;box-shadow:0 16px 40px #0007}.brand{color:#fbbf24;font-weight:800;font-size:20px;margin:4px 0}.sub{color:#aab6cc;font-size:12px;letter-spacing:1px;margin:5px 0 16px}.setup{text-align:left}.setup label{display:block;font-size:12px;color:#cbd5e1;font-weight:700;margin:0 0 6px}.setup input{width:100%;padding:12px;border-radius:10px;border:1px solid #64748b;background:#0b1329;color:white;font-size:13px}.btn{width:100%;border:0;border-radius:12px;padding:14px;margin-top:10px;font-weight:800;font-size:15px;color:white;background:#059669;cursor:pointer}.btn.stop{background:#dc2626}.btn.secondary{background:#334155}.reader{width:100%;min-height:280px;background:#000;border:2px solid #fbbf24;border-radius:16px;overflow:hidden;margin-top:12px}.reader video{object-fit:cover!important}.msg{min-height:30px;color:#fbbf24;font-size:13px;margin:10px 0;line-height:1.5}.result{border:1px solid #475569;background:#0b1329;border-radius:14px;padding:16px;margin-top:12px}.result.ok{border-color:#34d399}.result.bad{border-color:#f87171}.student{font-size:20px;font-weight:800;margin:7px}.muted{color:#aab6cc;font-size:12px}.hidden{display:none!important}.hint{font-size:12px;color:#94a3b8;line-height:1.5;margin-top:12px;text-align:left}@media(max-width:480px){body{padding:8px}.panel{padding:15px;border-radius:17px}.reader{min-height:260px}.brand{font-size:18px}}
+*{box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}body{margin:0;background:#070b19;color:#f8fafc;padding:16px;min-height:100vh}.wrap{max-width:760px;margin:0 auto}.panel{background:#162038;border:2px solid #a9852d;border-radius:22px;padding:20px;margin:12px 0;text-align:center;box-shadow:0 16px 40px #0007}.brand{color:#fbbf24;font-weight:800;font-size:20px;margin:4px 0}.sub{color:#aab6cc;font-size:12px;letter-spacing:1px;margin:5px 0 16px}.btn{width:100%;border:0;border-radius:12px;padding:14px;margin-top:10px;font-weight:800;font-size:15px;color:white;background:#059669;cursor:pointer}.btn.stop{background:#dc2626}.reader{width:100%;min-height:280px;background:#000;border:2px solid #fbbf24;border-radius:16px;overflow:hidden;margin-top:12px}.reader video{object-fit:cover!important}.msg{min-height:30px;color:#fbbf24;font-size:13px;margin:10px 0;line-height:1.5}.result{border:1px solid #475569;background:#0b1329;border-radius:14px;padding:16px;margin-top:12px}.result.ok{border-color:#34d399}.result.bad{border-color:#f87171}.student{font-size:20px;font-weight:800;margin:7px}.muted{color:#aab6cc;font-size:12px}.hidden{display:none!important}.hint{font-size:12px;color:#94a3b8;line-height:1.5;margin-top:12px;text-align:left}@media(max-width:480px){body{padding:8px}.panel{padding:15px;border-radius:17px}.reader{min-height:260px}.brand{font-size:18px}}
 </style>
 </head>
 <body>
@@ -26,31 +26,20 @@
       <div class="student" id="student">Arahkan QR kartu siswa</div>
       <div id="info" class="muted">Hasil absensi akan tampil di sini</div>
     </div>
-    
-    <div class="hint">Catatan: Pastikan ID pada QR kartu siswa sesuai dengan Kolom A di dalam Google Spreadsheet kelas masing-masing.</div>
   </section>
 </main>
 
 <script>
-// Ganti URL di bawah ini jika Anda memperbarui deployment Google Apps Script
+// --- PASTI KAN URL DI BAWAH INI ADALAH URL /EXEC TERBARU ANDA ---
 const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyxJmG1G_j3Hc_TTVr1sGr3F7_BK2SDpeUxuI92kg2s5b9FyjMhFxNuakOzcVfPfDM6/exec';
 
 let scanner=null, running=false, lastValue='', lastAt=0, busy=false;
 const $=id=>document.getElementById(id);
 
 function say(t){$('camMsg').textContent=t}
-function getUrl(){return DEFAULT_GAS_URL;}
 
 async function startScanner(){
   if(running)return;
-  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){
-    say('Halaman scanner harus dibuka melalui HTTPS.');
-    return;
-  }
-  if(!window.Html5Qrcode){
-    say('Library QR belum termuat. Periksa internet.');
-    return;
-  }
   try{
     say('Meminta akses kamera…');
     scanner=new Html5Qrcode('reader');
@@ -58,7 +47,7 @@ async function startScanner(){
     running=true;
     $('startBtn').classList.add('hidden');
     $('stopBtn').classList.remove('hidden');
-    say('Kamera aktif. Arahkan QR kartu siswa ke kotak scanner.');
+    say('Kamera aktif. Arahkan QR kartu siswa.');
   }catch(e){
     scanner=null;
     say('Gagal membuka kamera. Periksa izin browser.');
@@ -91,7 +80,7 @@ function sendScan(id){
   $('student').textContent='ID: '+id;
   $('info').textContent='Menghubungi database ZENOVA…';
   
-  let base=getUrl();
+  let base=DEFAULT_GAS_URL;
   let cb='zenovaCallback_'+Date.now()+'_'+Math.floor(Math.random()*100000);
   let script=document.createElement('script');
   let finished=false;
@@ -119,7 +108,7 @@ function sendScan(id){
     clearTimeout(timeout);
     delete window[cb];
     script.remove();
-    showResult({success:false,message:'Tidak dapat menghubungi Web App.'});
+    showResult({success:false,message:'Gagal terhubung ke Web App.'});
   };
   
   script.src=base+(base.includes('?')?'&':'?')+'api=scan&id='+encodeURIComponent(id)+'&callback='+encodeURIComponent(cb)+'&_='+Date.now();
@@ -129,10 +118,9 @@ function sendScan(id){
 function showResult(r){
   $('result').className='result '+(r&&r.success?'ok':'bad');
   $('state').textContent=r&&r.success?'✓ '+String(r.status||'BERHASIL').toUpperCase():'✕ ABSENSI GAGAL';
-  $('student').textContent=r&&r.success?r.nama:(r?.message||'Tidak ada respons');
-  $('info').textContent=r&&r.success?'Kelas: '+r.kelas:'Periksa ID siswa atau koneksi';
+  $('student').textContent=r&&r.success?r.nama:(r?.message||'Tidak ditemukan');
+  $('info').textContent=r&&r.success?'Kelas: '+r.kelas:'Periksa ID atau database';
   if(r&&r.success) speak((r.nama||'Siswa')+', '+(r.status||'Hadir'));
-  else speak(r?.message||'Absensi gagal');
   busy=false;
 }
 
@@ -145,8 +133,6 @@ function speak(t){
     speechSynthesis.speak(u);
   }
 }
-
-window.addEventListener('beforeunload',()=>{if(scanner&&running)scanner.stop()});
 </script>
 </body>
 </html>
