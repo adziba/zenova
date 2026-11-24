@@ -6,49 +6,56 @@
 <title>ZENOVA QR Scanner</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}body{margin:0;background:#070b19;color:#f8fafc;padding:16px;min-height:100vh}.wrap{max-width:760px;margin:0 auto}.panel{background:#162038;border:2px solid #a9852d;border-radius:22px;padding:24px;margin:12px 0;text-align:center;box-shadow:0 16px 40px #0007}.brand{color:#fbbf24;font-weight:800;font-size:22px;margin:4px 0}.sub{color:#aab6cc;font-size:12px;letter-spacing:1px;margin:5px 0 20px}.msg{color:#34d399;font-size:15px;font-weight:700;margin:15px 0}.result{border:2px solid #475569;background:#0b1329;border-radius:14px;padding:20px;margin-top:20px}.result.ok{border-color:#34d399}.result.bad{border-color:#f87171}.student{font-size:24px;font-weight:800;margin:10px 0}.muted{color:#aab6cc;font-size:13px}.hidden{display:none!important}
+*{box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}body{margin:0;background:#070b19;color:#f8fafc;padding:16px;min-height:100vh;display:flex;align-items:center;justify-content:center}.wrap{width:100%;max-width:760px;margin:0 auto}.panel{background:#162038;border:2px solid #a9852d;border-radius:22px;padding:30px;text-align:center;box-shadow:0 16px 40px #0007}.brand-logo{width:70px;height:70px;margin:0 auto 10px;background:linear-gradient(135deg,#fbbf24,#d97706);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:#070b19;box-shadow:0 8px 20px rgba(251,191,36,0.3)}.brand{color:#fbbf24;font-weight:800;font-size:24px;margin:4px 0}.sub{color:#aab6cc;font-size:13px;letter-spacing:1px;margin:5px 0 24px}.msg{color:#34d399;font-size:15px;font-weight:700;margin:15px 0;background:#05966922;padding:12px;border-radius:10px;border:1px solid #059669}.result{border:2px solid #475569;background:#0b1329;border-radius:14px;padding:24px;margin-top:20px}.result.ok{border-color:#34d399}.result.bad{border-color:#f87171}.student{font-size:28px;font-weight:800;margin:12px 0;color:#fff}.muted{color:#aab6cc;font-size:14px}
 </style>
 </head>
-<body onclick="document.getElementById('scannerInput').focus()">
+<body>
 <main class="wrap">
   <section class="panel">
+    <!-- Logo & Branding ZENOVA -->
+    <div class="brand-logo">Z</div>
     <div class="brand">ZENOVA ATTENDANCE</div>
-    <div class="sub">MTs MUHAMMADIYAH BATANG · HARDWARE SCANNER</div>
+    <div class="sub">MTs MUHAMMADIYAH BATANG · INSTANT SCANNER</div>
     
-    <!-- Kotak tersembunyi untuk menangkap tembakan dari alat scanner fisik -->
-    <input type="text" id="scannerInput" autofocus style="opacity:0; position:absolute; left:-9999px;" onkeypress="handleScanInput(event)">
+    <!-- Input tersembunyi untuk menangkap tembakan barcode -->
+    <input type="text" id="scanInput" autocomplete="off" style="position:absolute; opacity:0; pointer-events:none;">
     
-    <div id="camMsg" class="msg">⚡ SIAP MENERIMA SCANNER</div>
+    <div id="camMsg" class="msg">⚡ SIAP! SILAKAN SCAN KARTU SISWA</div>
     
     <div class="result" id="result">
       <div class="muted" id="state">MENUNGGU SCAN</div>
-      <div class="student" id="student">Arahkan alat scanner ke kartu siswa</div>
-      <div id="info" class="muted">Hasil absensi akan tampil di sini</div>
+      <div class="student" id="student">Arahkan alat scanner ke kartu</div>
+      <div id="info" class="muted">Nama dan kelas akan muncul otomatis di sini</div>
     </div>
   </section>
 </main>
 
 <script>
-// --- PASTI KAN URL DI BAWAH INI ADALAH URL /EXEC TERBARU ANDA ---
+// --- PASTIKAN URL INI ADALAH URL /EXEC TERBARU DARI GOOGLE APPS SCRIPT ANDA ---
 const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyxJmG1G_j3Hc_TTVr1sGr3F7_BK2SDpeUxuI92kg2s5b9FyjMhFxNuakOzcVfPfDM6/exec';
 
 let lastValue='', lastAt=0, busy=false;
 const $=id=>document.getElementById(id);
 
-// Menjaga fokus selalu di input tersembunyi agar langsung siap nerima scan kapan saja
-window.addEventListener('focus', () => { $('scannerInput').focus(); });
-setInterval(() => { if(document.activeElement !== $('scannerInput')) { $('scannerInput').focus(); } }, 1000);
+// Menjaga fokus selalu aktif agar siap menerima scan kapan saja
+window.addEventListener('click', () => { $('scanInput').focus(); });
+window.addEventListener('load', () => { $('scanInput').focus(); });
+setInterval(() => { if(document.activeElement !== $('scanInput')) { $('scanInput').focus(); } }, 500);
 
-function handleScanInput(e) {
+document.addEventListener('keydown', function(e) {
+  let target = $('scanInput');
   if (e.key === 'Enter') {
-    let inputEl = $('scannerInput');
-    let val = inputEl.value.trim();
-    inputEl.value = ''; // Bersihkan untuk scan berikutnya
+    let val = target.value.trim();
+    target.value = '';
     if (val) {
       sendScan(val);
     }
+  } else if (e.key.length === 1) {
+    if(document.activeElement !== target) {
+      target.value += e.key;
+    }
   }
-}
+});
 
 function sendScan(id){
   id=String(id||'').trim();
@@ -102,10 +109,11 @@ function sendScan(id){
 function showResult(r){
   $('result').className='result '+(r&&r.success?'ok':'bad');
   $('state').textContent=r&&r.success?'✓ '+String(r.status||'BERHASIL').toUpperCase():'✕ ABSENSI GAGAL';
-  $('student').textContent=r&&r.success?r.nama:(r?.message||'Tidak ditemukan');
-  $('info').textContent=r&&r.success?'Kelas: '+r.kelas:'Periksa ID atau database';
+  $('student').textContent=r&&r.success?r.nama:(r?.message||'ID Tidak Ditemukan');
+  $('info').textContent=r&&r.success?'Kelas: '+r.kelas:'Periksa kembali ID pada kartu siswa';
   if(r&&r.success) speak((r.nama||'Siswa')+', '+(r.status||'Hadir'));
   busy=false;
+  $('scanInput').focus();
 }
 
 function speak(t){
