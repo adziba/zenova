@@ -1,42 +1,152 @@
 <!doctype html>
 <html lang="id">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ZENOVA QR Scanner</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
 *{box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}body{margin:0;background:#070b19;color:#f8fafc;padding:16px;min-height:100vh}.wrap{max-width:760px;margin:0 auto}.panel{background:#162038;border:2px solid #a9852d;border-radius:22px;padding:20px;margin:12px 0;text-align:center;box-shadow:0 16px 40px #0007}.brand{color:#fbbf24;font-weight:800;font-size:20px;margin:4px 0}.sub{color:#aab6cc;font-size:12px;letter-spacing:1px;margin:5px 0 16px}.setup{text-align:left}.setup label{display:block;font-size:12px;color:#cbd5e1;font-weight:700;margin:0 0 6px}.setup input{width:100%;padding:12px;border-radius:10px;border:1px solid #64748b;background:#0b1329;color:white;font-size:13px}.btn{width:100%;border:0;border-radius:12px;padding:14px;margin-top:10px;font-weight:800;font-size:15px;color:white;background:#059669;cursor:pointer}.btn.stop{background:#dc2626}.btn.secondary{background:#334155}.reader{width:100%;min-height:280px;background:#000;border:2px solid #fbbf24;border-radius:16px;overflow:hidden;margin-top:12px}.reader video{object-fit:cover!important}.msg{min-height:30px;color:#fbbf24;font-size:13px;margin:10px 0;line-height:1.5}.result{border:1px solid #475569;background:#0b1329;border-radius:14px;padding:16px;margin-top:12px}.result.ok{border-color:#34d399}.result.bad{border-color:#f87171}.student{font-size:20px;font-weight:800;margin:7px}.muted{color:#aab6cc;font-size:12px}.hidden{display:none!important}.hint{font-size:12px;color:#94a3b8;line-height:1.5;margin-top:12px;text-align:left}@media(max-width:480px){body{padding:8px}.panel{padding:15px;border-radius:17px}.reader{min-height:260px}.brand{font-size:18px}}
-</style></head>
-<body><main class="wrap">
-<section class="panel">
-<div class="brand">ZENOVA ATTENDANCE</div><div class="sub">MTs MUHAMMADIYAH BATANG · QR SCANNER</div>
-<div class="setup hidden" id="setup">
-<label for="gasUrl">URL Web App Google Apps Script (akhiran /exec)</label>
-<input id="gasUrl" type="url" placeholder="https://script.google.com/macros/s/...../exec" autocomplete="url">
-<button class="btn secondary" onclick="saveUrl()">Simpan URL</button>
-</div>
-<div id="camMsg" class="msg">Tekan Mulai Scanner untuk mulai memindai QR siswa.</div>
-<div id="reader" class="reader"></div>
-<button id="startBtn" class="btn" onclick="startScanner()">📷 Mulai Scanner</button>
-<button id="stopBtn" class="btn stop hidden" onclick="stopScanner()">⏹ Tutup Kamera</button>
-<div class="result" id="result"><div class="muted" id="state">MENUNGGU SCAN</div><div class="student" id="student">Arahkan QR kartu siswa</div><div id="info" class="muted">Hasil absensi akan tampil di sini</div></div>
-<div class="hint">Catatan: izin kamera hanya diminta oleh browser saat pertama kali memakai scanner di alamat hosting ini. Pilih Izinkan; setelah itu browser biasanya mengingat izin untuk kunjungan berikutnya.</div>
-</section></main>
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="panel">
+    <div class="brand">ZENOVA ATTENDANCE</div>
+    <div class="sub">MTs MUHAMMADIYAH BATANG · QR SCANNER</div>
+    
+    <div id="camMsg" class="msg">Tekan Mulai Scanner untuk mulai memindai QR siswa.</div>
+    <div id="reader" class="reader"></div>
+    <button id="startBtn" class="btn" onclick="startScanner()">📷 Mulai Scanner</button>
+    <button id="stopBtn" class="btn stop hidden" onclick="stopScanner()">⏹ Tutup Kamera</button>
+    
+    <div class="result" id="result">
+      <div class="muted" id="state">MENUNGGU SCAN</div>
+      <div class="student" id="student">Arahkan QR kartu siswa</div>
+      <div id="info" class="muted">Hasil absensi akan tampil di sini</div>
+    </div>
+    
+    <div class="hint">Catatan: Pastikan ID pada QR kartu siswa sesuai dengan Kolom A di dalam Google Spreadsheet kelas masing-masing.</div>
+  </section>
+</main>
+
 <script>
+// Ganti URL di bawah ini jika Anda memperbarui deployment Google Apps Script
 const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyxJmG1G_j3Hc_TTVr1sGr3F7_BK2SDpeUxuI92kg2s5b9FyjMhFxNuakOzcVfPfDM6/exec';
+
 let scanner=null, running=false, lastValue='', lastAt=0, busy=false;
 const $=id=>document.getElementById(id);
-$('gasUrl').value=DEFAULT_GAS_URL; localStorage.setItem('zenova_gas_url', DEFAULT_GAS_URL);
+
 function say(t){$('camMsg').textContent=t}
-function saveUrl(){let u=$('gasUrl').value.trim();if(!/^https:\/\/script\.google\.com\/macros\/s\/[^\s]+\/exec(?:\?.*)?$/.test(u)){say('URL belum sesuai. Gunakan URL Web App Google Apps Script yang berakhiran /exec.');return}localStorage.setItem('zenova_gas_url',u);say('URL tersimpan. Siap memulai scanner.')}
-function getUrl(){let u=DEFAULT_GAS_URL;if(!/^https:\/\/script\.google\.com\/macros\/s\/[^\s]+\/exec(?:\?.*)?$/.test(u)){say('URL harus berupa URL Web App HTTPS yang berakhiran /exec.');return ''}localStorage.setItem('zenova_gas_url',u);return u}
-async function startScanner(){if(running)return;if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){say('Halaman scanner harus dibuka melalui HTTPS di Chrome terbaru.');return}if(!window.Html5Qrcode){say('Library QR belum termuat. Periksa internet lalu muat ulang.');return}if(!getUrl())return;
- try{say('Meminta akses kamera…');scanner=new Html5Qrcode('reader');await scanner.start({facingMode:'environment'},{fps:12,qrbox:{width:230,height:230},aspectRatio:1},decoded=>sendScan(decoded),()=>{});running=true;$('startBtn').classList.add('hidden');$('stopBtn').classList.remove('hidden');say('Kamera aktif. Arahkan QR kartu siswa ke kotak scanner.');}
- catch(e){scanner=null;let n=e?.name||'',m=e?.message||String(e);if(n==='NotAllowedError'||n==='PermissionDeniedError')say('Izin kamera ditolak untuk alamat scanner ini. Izinkan kamera pada situs hosting scanner, bukan hanya script.google.com.');else if(n==='NotFoundError')say('Kamera tidak ditemukan pada perangkat.');else if(n==='NotReadableError')say('Kamera sedang digunakan aplikasi lain. Tutup aplikasi kamera/meeting lalu coba lagi.');else say('Gagal membuka kamera: '+m)} }
-async function stopScanner(){if(scanner&&running){try{await scanner.stop()}catch(e){}try{await scanner.clear()}catch(e){}}scanner=null;running=false;$('startBtn').classList.remove('hidden');$('stopBtn').classList.add('hidden');say('Kamera ditutup.')}
-function sendScan(id){id=String(id||'').trim();if(!id||busy)return;let now=Date.now();if(id===lastValue&&now-lastAt<2200)return;lastValue=id;lastAt=now;busy=true;$('result').className='result';$('state').textContent='MEMPROSES…';$('student').textContent='ID: '+id;$('info').textContent='Menghubungi database ZENOVA…';let base=getUrl();if(!base){busy=false;return}let cb='zenovaCallback_'+Date.now()+'_'+Math.floor(Math.random()*100000);let script=document.createElement('script');let finished=false;let timeout=setTimeout(()=>{if(finished)return;finished=true;delete window[cb];script.remove();showResult({success:false,message:'Server tidak merespons. Periksa URL Web App dan deployment.'});},20000);window[cb]=function(data){if(finished)return;finished=true;clearTimeout(timeout);delete window[cb];script.remove();showResult(data)};script.onerror=function(){if(finished)return;finished=true;clearTimeout(timeout);delete window[cb];script.remove();showResult({success:false,message:'Tidak dapat menghubungi Web App. Pastikan deployment dapat diakses.'})};script.src=base+(base.includes('?')?'&':'?')+'api=scan&id='+encodeURIComponent(id)+'&callback='+encodeURIComponent(cb)+'&_='+Date.now();document.body.appendChild(script)}
-function showResult(r){$('result').className='result '+(r&&r.success?'ok':'bad');$('state').textContent=r&&r.success?'✓ '+String(r.status||'BERHASIL').toUpperCase():'✕ ABSENSI GAGAL';$('student').textContent=r&&r.success?r.nama:(r?.message||'Tidak ada respons');$('info').textContent=r&&r.success?'Kelas: '+r.kelas:'Periksa ID siswa atau koneksi';if(r&&r.success)speak((r.nama||'Siswa')+', '+(r.status||'Hadir'));else speak(r?.message||'Absensi gagal');busy=false}
-function speak(t){if('speechSynthesis'in window){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.lang='id-ID';u.rate=1.1;speechSynthesis.speak(u)}}
+function getUrl(){return DEFAULT_GAS_URL;}
+
+async function startScanner(){
+  if(running)return;
+  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){
+    say('Halaman scanner harus dibuka melalui HTTPS.');
+    return;
+  }
+  if(!window.Html5Qrcode){
+    say('Library QR belum termuat. Periksa internet.');
+    return;
+  }
+  try{
+    say('Meminta akses kamera…');
+    scanner=new Html5Qrcode('reader');
+    await scanner.start({facingMode:'environment'},{fps:12,qrbox:{width:230,height:230},aspectRatio:1},decoded=>sendScan(decoded),()=>{});
+    running=true;
+    $('startBtn').classList.add('hidden');
+    $('stopBtn').classList.remove('hidden');
+    say('Kamera aktif. Arahkan QR kartu siswa ke kotak scanner.');
+  }catch(e){
+    scanner=null;
+    say('Gagal membuka kamera. Periksa izin browser.');
+  }
+}
+
+async function stopScanner(){
+  if(scanner&&running){
+    try{await scanner.stop()}catch(e){}
+    try{await scanner.clear()}catch(e){}
+  }
+  scanner=null;
+  running=false;
+  $('startBtn').classList.remove('hidden');
+  $('stopBtn').classList.add('hidden');
+  say('Kamera ditutup.');
+}
+
+function sendScan(id){
+  id=String(id||'').trim();
+  if(!id||busy)return;
+  let now=Date.now();
+  if(id===lastValue&&now-lastAt<2200)return;
+  lastValue=id;
+  lastAt=now;
+  busy=true;
+  
+  $('result').className='result';
+  $('state').textContent='MEMPROSES…';
+  $('student').textContent='ID: '+id;
+  $('info').textContent='Menghubungi database ZENOVA…';
+  
+  let base=getUrl();
+  let cb='zenovaCallback_'+Date.now()+'_'+Math.floor(Math.random()*100000);
+  let script=document.createElement('script');
+  let finished=false;
+  
+  let timeout=setTimeout(()=>{
+    if(finished)return;
+    finished=true;
+    delete window[cb];
+    script.remove();
+    showResult({success:false,message:'Server tidak merespons.'});
+  },20000);
+  
+  window[cb]=function(data){
+    if(finished)return;
+    finished=true;
+    clearTimeout(timeout);
+    delete window[cb];
+    script.remove();
+    showResult(data);
+  };
+  
+  script.onerror=function(){
+    if(finished)return;
+    finished=true;
+    clearTimeout(timeout);
+    delete window[cb];
+    script.remove();
+    showResult({success:false,message:'Tidak dapat menghubungi Web App.'});
+  };
+  
+  script.src=base+(base.includes('?')?'&':'?')+'api=scan&id='+encodeURIComponent(id)+'&callback='+encodeURIComponent(cb)+'&_='+Date.now();
+  document.body.appendChild(script);
+}
+
+function showResult(r){
+  $('result').className='result '+(r&&r.success?'ok':'bad');
+  $('state').textContent=r&&r.success?'✓ '+String(r.status||'BERHASIL').toUpperCase():'✕ ABSENSI GAGAL';
+  $('student').textContent=r&&r.success?r.nama:(r?.message||'Tidak ada respons');
+  $('info').textContent=r&&r.success?'Kelas: '+r.kelas:'Periksa ID siswa atau koneksi';
+  if(r&&r.success) speak((r.nama||'Siswa')+', '+(r.status||'Hadir'));
+  else speak(r?.message||'Absensi gagal');
+  busy=false;
+}
+
+function speak(t){
+  if('speechSynthesis'in window){
+    speechSynthesis.cancel();
+    let u=new SpeechSynthesisUtterance(t);
+    u.lang='id-ID';
+    u.rate=1.1;
+    speechSynthesis.speak(u);
+  }
+}
+
 window.addEventListener('beforeunload',()=>{if(scanner&&running)scanner.stop()});
-</script></body></html>
+</script>
+</body>
+</html>
