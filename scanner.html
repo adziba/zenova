@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
-*{box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}body{margin:0;background:#070b19;color:#f8fafc;padding:16px;min-height:100vh}.wrap{max-width:760px;margin:0 auto}.panel{background:#162038;border:2px solid #a9852d;border-radius:22px;padding:20px;margin:12px 0;text-align:center;box-shadow:0 16px 40px #0007}.brand{color:#fbbf24;font-weight:800;font-size:20px;margin:4px 0}.sub{color:#aab6cc;font-size:12px;letter-spacing:1px;margin:5px 0 16px}.btn{width:100%;border:0;border-radius:12px;padding:14px;margin-top:10px;font-weight:800;font-size:15px;color:white;background:#059669;cursor:pointer}.btn.stop{background:#dc2626}.reader{width:100%;min-height:280px;background:#000;border:2px solid #fbbf24;border-radius:16px;overflow:hidden;margin-top:12px}.reader video{object-fit:cover!important}.msg{min-height:30px;color:#fbbf24;font-size:13px;margin:10px 0;line-height:1.5}.result{border:1px solid #475569;background:#0b1329;border-radius:14px;padding:16px;margin-top:12px}.result.ok{border-color:#34d399}.result.bad{border-color:#f87171}.student{font-size:20px;font-weight:800;margin:7px}.muted{color:#aab6cc;font-size:12px}.hidden{display:none!important}.hint{font-size:12px;color:#94a3b8;line-height:1.5;margin-top:12px;text-align:left}@media(max-width:480px){body{padding:8px}.panel{padding:15px;border-radius:17px}.reader{min-height:260px}.brand{font-size:18px}}
+*{box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}body{margin:0;background:#070b19;color:#f8fafc;padding:16px;min-height:100vh}.wrap{max-width:760px;margin:0 auto}.panel{background:#162038;border:2px solid #a9852d;border-radius:22px;padding:20px;margin:12px 0;text-align:center;box-shadow:0 16px 40px #0007}.brand{color:#fbbf24;font-weight:800;font-size:20px;margin:4px 0}.sub{color:#aab6cc;font-size:12px;letter-spacing:1px;margin:5px 0 16px}.btn{width:100%;border:0;border-radius:12px;padding:14px;margin-top:10px;font-weight:800;font-size:15px;color:white;background:#059669;cursor:pointer}.btn.stop{background:#dc2626}.reader{width:100%;min-height:280px;background:#000;border:2px solid #fbbf24;border-radius:16px;overflow:hidden;margin-top:12px}.reader video{object-fit:cover!important}.msg{min-height:30px;color:#fbbf24;font-size:13px;margin:10px 0;line-height:1.5}.result{border:1px solid #475569;background:#0b1329;border-radius:14px;padding:16px;margin-top:12px}.result.ok{border-color:#34d399}.result.bad{border-color:#f87171}.student{font-size:20px;font-weight:800;margin:7px}.muted{color:#aab6cc;font-size:12px}.hidden{display:none!important}@media(max-width:480px){body{padding:8px}.panel{padding:15px;border-radius:17px}.reader{min-height:260px}.brand{font-size:18px}}
 </style>
 </head>
 <body>
@@ -30,7 +30,7 @@
 </main>
 
 <script>
-// --- PASTI KAN URL DI BAWAH INI ADALAH URL /EXEC TERBARU ANDA ---
+// Pastikan URL di bawah ini adalah URL /exec terbaru dari Google Apps Script Anda
 const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyxJmG1G_j3Hc_TTVr1sGr3F7_BK2SDpeUxuI92kg2s5b9FyjMhFxNuakOzcVfPfDM6/exec';
 
 let scanner=null, running=false, lastValue='', lastAt=0, busy=false;
@@ -47,7 +47,7 @@ async function startScanner(){
     running=true;
     $('startBtn').classList.add('hidden');
     $('stopBtn').classList.remove('hidden');
-    say('Kamera aktif. Arahkan QR kartu siswa.');
+    say('Kamera aktif. Arahkan QR kartu siswa ke kotak.');
   }catch(e){
     scanner=null;
     say('Gagal membuka kamera. Periksa izin browser.');
